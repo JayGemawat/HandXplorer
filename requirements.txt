@@ -62,7 +62,7 @@ pillow==11.1.0
     #   pyscreeze
 protobuf==4.25.6
     # via mediapipe
-pynput
+mouse
     # via -r requirements.in
 pycparser==2.22
     # via cffi
