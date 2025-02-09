@@ -6,7 +6,15 @@ services:
     plan: free  # Use Render's free tier
     buildCommand: |
       pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    buildCommand: |
+  apt-get update && apt-get install -y xvfb
+  pip install -r requirements.txt
+
+startCommand: |
+  Xvfb :99 -screen 0 1280x720x16 &
+  export DISPLAY=:99
+  gunicorn app:app
+
     autoDeploy: true
     envVars:
       - key: FLASK_ENV
