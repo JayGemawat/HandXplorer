@@ -5,8 +5,7 @@ import numpy as np
 import logging
 import atexit
 from flask import Flask, Response, render_template
-import mouse  # Replacing pynput.mouse
-import keyboard  # Keeping keyboard support
+import mouse  # For mouse control
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -14,13 +13,16 @@ app = Flask(__name__)
 # Setup Logging
 logging.basicConfig(level=logging.INFO)
 
-# Setup Camera
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+# Use webcam stream if running on Render
+STREAM_URL = "http://YOUR_IP:8080/feed"
+
+if "RENDER" in os.environ:
+    cap = cv2.VideoCapture(STREAM_URL)  # Read from webcam stream
+else:
+    cap = cv2.VideoCapture(0)  # Use local webcam
 
 if not cap.isOpened():
-    logging.error("⚠️ Camera failed to initialize. Check camera permissions!")
+    logging.error("⚠️ Camera failed to initialize. Check stream URL or webcam!")
 
 # Setup Mediapipe Hand Detector
 hand_detector = mp.solutions.hands.Hands(
@@ -42,7 +44,7 @@ def generate_frames():
     while True:
         success, frame = cap.read()
         if not success:
-            logging.warning("⚠️ Failed to capture video frame.")
+            logging.warning("⚠️ Failed to capture video frame. Check webcam stream.")
             break
 
         frame = cv2.flip(frame, 1)
