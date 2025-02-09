@@ -14,7 +14,7 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # Use webcam stream if running on Render
-STREAM_URL = "http://YOUR_IP:8080/feed"
+STREAM_URL = "http://handxplorer.onrender.com/video:8080/feed"
 
 if "RENDER" in os.environ:
     cap = cv2.VideoCapture(STREAM_URL)  # Read from webcam stream
