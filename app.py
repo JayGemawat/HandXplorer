@@ -1,8 +1,8 @@
 import os
 
-# Setup Virtual Display for Render
-if "RENDER" in os.environ:  # Only set in Render environment
-    os.system("Xvfb :99 -screen 0 1280x720x16 &")  # Start Xvfb
+# Start Xvfb manually if not already running (Render requires this)
+if "RENDER" in os.environ:
+    os.system("Xvfb :99 -screen 0 1280x720x16 -ac &")
     os.environ["DISPLAY"] = ":99"  # Set DISPLAY variable
 
 import cv2
