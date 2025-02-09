@@ -1,14 +1,12 @@
 import os
-
-# Import required libraries
 import cv2
 import mediapipe as mp
 import numpy as np
 import logging
 import atexit
 from flask import Flask, Response, render_template
-from pynput.mouse import Controller, Button
-import keyboard
+import autopy  # Replaces pynput for mouse control
+import keyboard  # For keyboard controls
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -34,7 +32,7 @@ hand_detector = mp.solutions.hands.Hands(
 drawing_utils = mp.solutions.drawing_utils
 
 # Get Screen Size
-mouse = Controller()
+screen_width, screen_height = autopy.screen.size()
 prev_x, prev_y = 0, 0
 smooth_factor = 0.3  # Adjust for smooth movement
 index_x, index_y = 0, 0  # Initialize variables
@@ -67,37 +65,38 @@ def generate_frames():
 
                     if id == 8:  # Index Finger
                         cv2.circle(img=frame, center=(x, y), radius=10, color=(0, 255, 255))
-                        index_x = x
-                        index_y = y
+                        index_x = screen_width / frame_width * x
+                        index_y = screen_height / frame_height * y
 
                         # Smooth Movement
                         smooth_x = prev_x * (1 - smooth_factor) + index_x * smooth_factor
                         smooth_y = prev_y * (1 - smooth_factor) + index_y * smooth_factor
-                        mouse.position = (smooth_x * 1920 // frame_width, smooth_y * 1080 // frame_height)
+                        autopy.mouse.move(smooth_x, smooth_y)
                         prev_x, prev_y = smooth_x, smooth_y
 
                     if id == 4:  # Thumb
                         cv2.circle(img=frame, center=(x, y), radius=10, color=(0, 255, 255))
-                        thumb_x = x
-                        thumb_y = y
+                        thumb_x = screen_width / frame_width * x
+                        thumb_y = screen_height / frame_height * y
 
                     if id == 12:  # Middle Finger
-                        middle_y = y
+                        middle_y = screen_height / frame_height * y
 
                 # Left Click (Pinch Index + Thumb)
                 if abs(index_x - thumb_x) < 40 and abs(index_y - thumb_y) < 40:
                     logging.info("🖱️ Left Click Triggered")
-                    mouse.click(Button.left, 1)
-
+                    autopy.mouse.click()
+                    
                 # Right Click (Pinch Index + Thumb + Middle)
                 if abs(index_x - thumb_x) < 40 and abs(index_y - thumb_y) < 40 and abs(middle_y - index_y) < 40:
                     logging.info("🖱️ Right Click Triggered")
-                    mouse.click(Button.right, 1)
+                    autopy.mouse.click(autopy.mouse.Button.RIGHT)
 
                 # Double Click (Close Fingers Together)
                 if abs(index_x - thumb_x) < 30 and abs(index_y - thumb_y) < 30 and abs(middle_y - index_y) < 30:
                     logging.info("🖱️ Double Click Triggered")
-                    mouse.click(Button.left, 2)
+                    autopy.mouse.click()
+                    autopy.mouse.click()
 
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
