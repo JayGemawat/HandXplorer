@@ -1,3 +1,10 @@
+import os
+
+# Setup Virtual Display for Render
+if "RENDER" in os.environ:  # Only set in Render environment
+    os.system("Xvfb :99 -screen 0 1280x720x16 &")  # Start Xvfb
+    os.environ["DISPLAY"] = ":99"  # Set DISPLAY variable
+
 import cv2
 import mediapipe as mp
 import pyautogui
@@ -121,4 +128,5 @@ def cleanup():
 atexit.register(cleanup)
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get("PORT", 10000))  # Use port 10000 or the one set by Render
+    app.run(host='0.0.0.0', port=port, debug=True)
