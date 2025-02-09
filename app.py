@@ -1,17 +1,14 @@
 import os
 
-# Start Xvfb manually if not already running (Render requires this)
-if "RENDER" in os.environ:
-    os.system("Xvfb :99 -screen 0 1280x720x16 -ac &")
-    os.environ["DISPLAY"] = ":99"  # Set DISPLAY variable
-
+# Import required libraries
 import cv2
 import mediapipe as mp
-import pyautogui
 import numpy as np
 import logging
 import atexit
 from flask import Flask, Response, render_template
+from pynput.mouse import Controller, Button
+import keyboard
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -37,7 +34,7 @@ hand_detector = mp.solutions.hands.Hands(
 drawing_utils = mp.solutions.drawing_utils
 
 # Get Screen Size
-screen_width, screen_height = pyautogui.size()
+mouse = Controller()
 prev_x, prev_y = 0, 0
 smooth_factor = 0.3  # Adjust for smooth movement
 index_x, index_y = 0, 0  # Initialize variables
@@ -70,40 +67,37 @@ def generate_frames():
 
                     if id == 8:  # Index Finger
                         cv2.circle(img=frame, center=(x, y), radius=10, color=(0, 255, 255))
-                        index_x = screen_width / frame_width * x
-                        index_y = screen_height / frame_height * y
+                        index_x = x
+                        index_y = y
 
                         # Smooth Movement
                         smooth_x = prev_x * (1 - smooth_factor) + index_x * smooth_factor
                         smooth_y = prev_y * (1 - smooth_factor) + index_y * smooth_factor
-                        pyautogui.moveTo(smooth_x, smooth_y)
+                        mouse.position = (smooth_x * 1920 // frame_width, smooth_y * 1080 // frame_height)
                         prev_x, prev_y = smooth_x, smooth_y
 
                     if id == 4:  # Thumb
                         cv2.circle(img=frame, center=(x, y), radius=10, color=(0, 255, 255))
-                        thumb_x = screen_width / frame_width * x
-                        thumb_y = screen_height / frame_height * y
+                        thumb_x = x
+                        thumb_y = y
 
                     if id == 12:  # Middle Finger
-                        middle_y = screen_height / frame_height * y
+                        middle_y = y
 
                 # Left Click (Pinch Index + Thumb)
                 if abs(index_x - thumb_x) < 40 and abs(index_y - thumb_y) < 40:
                     logging.info("🖱️ Left Click Triggered")
-                    pyautogui.click()
-                    pyautogui.sleep(0.3)
+                    mouse.click(Button.left, 1)
 
                 # Right Click (Pinch Index + Thumb + Middle)
                 if abs(index_x - thumb_x) < 40 and abs(index_y - thumb_y) < 40 and abs(middle_y - index_y) < 40:
                     logging.info("🖱️ Right Click Triggered")
-                    pyautogui.rightClick()
-                    pyautogui.sleep(0.3)
+                    mouse.click(Button.right, 1)
 
                 # Double Click (Close Fingers Together)
                 if abs(index_x - thumb_x) < 30 and abs(index_y - thumb_y) < 30 and abs(middle_y - index_y) < 30:
                     logging.info("🖱️ Double Click Triggered")
-                    pyautogui.doubleClick()
-                    pyautogui.sleep(0.5)
+                    mouse.click(Button.left, 2)
 
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
