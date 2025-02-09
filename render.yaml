@@ -5,14 +5,10 @@ services:
     region: oregon  # Change if needed (options: ohio, frankfurt, singapore, etc.)
     plan: free  # Use Render's free tier
     buildCommand: |
-      apt-get update && apt-get install -y xvfb
       pip install -r requirements.txt
 
     startCommand: |
-  Xvfb :99 -screen 0 1280x720x16 -ac &
-  export DISPLAY=:99
-  gunicorn -b 0.0.0.0:10000 app:app
-
+      gunicorn -b 0.0.0.0:10000 app:app
 
     autoDeploy: true
     envVars:
