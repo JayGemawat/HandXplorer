@@ -5,8 +5,8 @@ import numpy as np
 import logging
 import atexit
 from flask import Flask, Response, render_template
-from pynput.mouse import Controller, Button
-import keyboard  # Only for optional key controls
+import mouse  # Replacing pynput.mouse
+import keyboard  # Keeping keyboard support
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -32,7 +32,6 @@ hand_detector = mp.solutions.hands.Hands(
 drawing_utils = mp.solutions.drawing_utils
 
 # Get Screen Size
-mouse = Controller()
 prev_x, prev_y = 0, 0
 smooth_factor = 0.3  # Adjust for smooth movement
 index_x, index_y = 0, 0  # Initialize variables
@@ -71,7 +70,7 @@ def generate_frames():
                         # Smooth Movement
                         smooth_x = prev_x * (1 - smooth_factor) + index_x * smooth_factor
                         smooth_y = prev_y * (1 - smooth_factor) + index_y * smooth_factor
-                        mouse.position = (smooth_x * 1920 // frame_width, smooth_y * 1080 // frame_height)
+                        mouse.move(smooth_x * 1920 // frame_width, smooth_y * 1080 // frame_height)
                         prev_x, prev_y = smooth_x, smooth_y
 
                     if id == 4:  # Thumb
@@ -85,17 +84,17 @@ def generate_frames():
                 # Left Click (Pinch Index + Thumb)
                 if abs(index_x - thumb_x) < 40 and abs(index_y - thumb_y) < 40:
                     logging.info("🖱️ Left Click Triggered")
-                    mouse.click(Button.left, 1)
+                    mouse.click()
 
                 # Right Click (Pinch Index + Thumb + Middle)
                 if abs(index_x - thumb_x) < 40 and abs(index_y - thumb_y) < 40 and abs(middle_y - index_y) < 40:
                     logging.info("🖱️ Right Click Triggered")
-                    mouse.click(Button.right, 1)
+                    mouse.right_click()
 
                 # Double Click (Close Fingers Together)
                 if abs(index_x - thumb_x) < 30 and abs(index_y - thumb_y) < 30 and abs(middle_y - index_y) < 30:
                     logging.info("🖱️ Double Click Triggered")
-                    mouse.click(Button.left, 2)
+                    mouse.double_click()
 
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
