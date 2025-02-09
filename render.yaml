@@ -2,14 +2,12 @@ services:
   - name: handxplorer
     type: web
     env: python
-    region: oregon  # Change if needed (options: ohio, frankfurt, singapore, etc.)
-    plan: free  # Use Render's free tier
+    region: oregon
+    plan: free
     buildCommand: |
       pip install -r requirements.txt
-
     startCommand: |
       gunicorn -b 0.0.0.0:10000 app:app
-
     autoDeploy: true
     envVars:
       - key: FLASK_ENV
